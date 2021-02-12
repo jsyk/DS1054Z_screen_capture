@@ -201,7 +201,7 @@ class Telnet:
         self.port = port
         self.timeout = timeout
         self.sock = None
-        self.rawq = ''
+        self.rawq = bytes()
         self.irawq = 0
         self.cookedq = ''
         self.eof = 0
@@ -241,11 +241,11 @@ class Telnet:
 
         """
         if self.debuglevel > 0:
-            print 'Telnet(%s,%s):' % (self.host, self.port),
+            print('Telnet(%s,%s):' % (self.host, self.port), end=' ')
             if args:
-                print msg % args
+                print(msg % args)
             else:
-                print msg
+                print(msg)
 
     def set_debuglevel(self, debuglevel):
         """Set the debug level.
@@ -283,7 +283,7 @@ class Telnet:
         if IAC in buffer:
             buffer = buffer.replace(IAC, IAC+IAC)
         self.msg("send %r", buffer)
-        self.sock.sendall(buffer)
+        self.sock.sendall(buffer.encode('latin_1'))
 
     def read_until(self, match, timeout=None):
         """Read until a given string is encountered or until timeout.
@@ -455,7 +455,7 @@ class Telnet:
         buf = self.cookedq
         self.cookedq = ''
         if not buf and self.eof and not self.rawq:
-            raise EOFError, 'telnet connection closed'
+            raise EOFError('telnet connection closed')
         return buf
 
     def read_sb_data(self):
@@ -491,7 +491,7 @@ class Telnet:
                     #if c == "\021":
                     #    continue
                     if c != IAC:
-                        buf[self.sb] = buf[self.sb] + c
+                        buf[self.sb] = buf[self.sb] + chr(c)
                         continue
                     else:
                         self.iacseq += c
@@ -560,7 +560,7 @@ class Telnet:
         c = self.rawq[self.irawq]
         self.irawq = self.irawq + 1
         if self.irawq >= len(self.rawq):
-            self.rawq = ''
+            self.rawq = bytes()
             self.irawq = 0
         return c
 
@@ -572,7 +572,7 @@ class Telnet:
 
         """
         if self.irawq >= len(self.rawq):
-            self.rawq = ''
+            self.rawq = bytes()
             self.irawq = 0
         # The buffer size should be fairly small so as to avoid quadratic
         # behavior in process_rawq() above
@@ -596,7 +596,7 @@ class Telnet:
                 try:
                     text = self.read_eager()
                 except EOFError:
-                    print '*** Connection closed by remote host ***'
+                    print('*** Connection closed by remote host ***')
                     break
                 if text:
                     sys.stdout.write(text)
@@ -609,8 +609,8 @@ class Telnet:
 
     def mt_interact(self):
         """Multithreaded version of interact()."""
-        import thread
-        thread.start_new_thread(self.listener, ())
+        import _thread
+        _thread.start_new_thread(self.listener, ())
         while 1:
             line = sys.stdin.readline()
             if not line:
@@ -623,7 +623,7 @@ class Telnet:
             try:
                 data = self.read_eager()
             except EOFError:
-                print '*** Connection closed by remote host ***'
+                print('*** Connection closed by remote host ***')
                 return
             if data:
                 sys.stdout.write(data)
@@ -664,7 +664,7 @@ class Telnet:
         """
         re = None
         expect_list = expect_list[:]
-        indices = range(len(expect_list))
+        indices = list(range(len(expect_list)))
         for i in indices:
             if not hasattr(expect_list[i], "search"):
                 if not re: import re
@@ -728,7 +728,7 @@ class Telnet:
         """
         re = None
         list = list[:]
-        indices = range(len(list))
+        indices = list(range(len(list)))
         for i in indices:
             if not hasattr(list[i], "search"):
                 if not re: import re
